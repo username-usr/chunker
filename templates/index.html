@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tamil Speech Recognition & Transliteration</title>
+    <style>
+      :root {
+        --primary-color: #4a148c;
+        --secondary-color: #7c43bd;
+        --light-color: #f3e5f5;
+        --dark-color: #2e1065;
+        --success-color: #4caf50;
+        --error-color: #f44336;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background-color: #f9f9f9;
+        margin: 0;
+        padding: 0;
+      }
+
+      .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      header {
+        background: var(--primary-color);
+        color: white;
+        padding: 20px 0;
+        text-align: center;
+      }
+
+      header h1 {
+        margin: 0;
+        font-size: 2.2rem;
+      }
+
+      header p {
+        margin: 10px 0 0;
+        opacity: 0.9;
+      }
+
+      .main-content {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+        margin-top: 30px;
+      }
+
+      .card {
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        padding: 25px;
+      }
+
+      .card h2 {
+        color: var(--primary-color);
+        margin-top: 0;
+        font-size: 1.5rem;
+        border-bottom: 2px solid var(--light-color);
+        padding-bottom: 10px;
+      }
+
+      .upload-area {
+        border: 2px dashed var(--light-color);
+        border-radius: 8px;
+        padding: 40px 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.3s;
+        margin-bottom: 20px;
+        background-color: #fafafa;
+      }
+
+      .upload-area:hover,
+      .upload-area.active {
+        border-color: var(--secondary-color);
+        background-color: var(--light-color);
+      }
+
+      .upload-area i {
+        font-size: 48px;
+        color: var(--secondary-color);
+        margin-bottom: 15px;
+        display: block;
+      }
+
+      .upload-area p {
+        margin: 0;
+        color: #666;
+      }
+
+      .upload-area.active p {
+        color: var(--primary-color);
+      }
+
+      .file-info {
+        display: none;
+        margin-top: 15px;
+        padding: 10px;
+        background-color: var(--light-color);
+        border-radius: 5px;
+      }
+
+      .btn {
+        display: inline-block;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: background-color 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        width: 100%;
+      }
+
+      .btn:hover {
+        background-color: var(--secondary-color);
+      }
+
+      .btn:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+      }
+
+      .options {
+        margin: 20px 0;
+      }
+
+      .options label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: var(--dark-color);
+        font-weight: 500;
+      }
+
+      .options select {
+        width: 100%;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        background-color: white;
+        font-size: 1rem;
+      }
+
+      .progress-area {
+        display: none;
+        margin: 20px 0;
+      }
+
+      .progress-bar {
+        height: 6px;
+        background-color: #e0e0e0;
+        border-radius: 3px;
+        overflow: hidden;
+        margin-bottom: 8px;
+      }
+
+      .progress {
+        height: 100%;
+        background-color: var(--primary-color);
+        width: 0%;
+        transition: width 0.5s;
+      }
+
+      .progress-status {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        color: #666;
+      }
+
+      .chunk-area {
+        display: none;
+        margin-top: 20px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        table-layout: fixed;
+      }
+
+      th,
+      td {
+        padding: 12px 15px;
+        text-align: left;
+        border: 1px solid #ddd;
+      }
+
+      th {
+        background-color: var(--light-color);
+        color: var(--primary-color);
+        font-weight: 600;
+      }
+
+      th:first-child {
+        width: 10%;
+      }
+
+      th:nth-child(2) {
+        width: 65%;
+      }
+
+      th:last-child {
+        width: 25%;
+        text-align: center;
+      }
+
+      td:last-child {
+        text-align: center;
+      }
+
+      tr:nth-child(even) {
+        background-color: #f9f9f9;
+      }
+
+      /* Custom Checkbox Styling */
+      .checkbox-container {
+        display: inline-block;
+        position: relative;
+        padding-left: 30px;
+        margin-bottom: 15px;
+        cursor: pointer;
+        font-size: 1em;
+        user-select: none;
+      }
+
+      .checkbox-container input {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+        height: 0;
+        width: 0;
+      }
+
+      .checkmark {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 20px;
+        width: 20px;
+        background-color: #eee;
+        border-radius: 4px;
+        transition: background-color 0.3s ease;
+      }
+
+      .checkbox-container:hover input ~ .checkmark {
+        background-color: #ccc;
+      }
+
+      .checkbox-container input:checked ~ .checkmark {
+        background-color: var(--primary-color);
+      }
+
+      .checkmark:after {
+        content: "";
+        position: absolute;
+        display: none;
+      }
+
+      .checkbox-container input:checked ~ .checkmark:after {
+        display: block;
+      }
+
+      .checkmark:after {
+        left: 7px;
+        top: 3px;
+        width: 6px;
+        height: 12px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+      }
+
+      .result-area {
+        display: none;
+        margin-top: 20px;
+      }
+
+      .result-box {
+        background-color: #f5f5f5;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-family: "Latha", "Arial Unicode MS", sans-serif;
+        line-height: 1.8;
+        white-space: pre-wrap;
+      }
+
+      .result-box h3 {
+        margin-top: 0;
+        color: var(--primary-color);
+        font-size: 1.1rem;
+      }
+
+      .copy-btn {
+        background-color: transparent;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 5px 10px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .copy-btn:hover {
+        border-color: var(--secondary-color);
+        color: var(--secondary-color);
+      }
+
+      .log-area {
+        max-height: 200px;
+        overflow-y: auto;
+        background-color: #f0f0f0;
+        padding: 15px;
+        border-radius: 8px;
+        font-family: monospace;
+        font-size: 0.9rem;
+        color: #333;
+      }
+
+      .log-entry {
+        margin-bottom: 5px;
+        padding-bottom: 5px;
+        border-bottom: 1px dashed #ddd;
+      }
+
+      .log-time {
+        color: #888;
+        font-size: 0.8rem;
+      }
+
+      .error {
+        color: var(--error-color);
+      }
+
+      .success {
+        color: var(--success-color);
+      }
+
+      .info {
+        color: #2196f3;
+      }
+
+      footer {
+        text-align: center;
+        margin-top: 50px;
+        padding: 20px;
+        color: #666;
+        font-size: 0.9rem;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 10px;
+        }
+
+        header {
+          padding: 15px 0;
+        }
+
+        header h1 {
+          font-size: 1.8rem;
+        }
+
+        .card {
+          padding: 15px;
+        }
+      }
+
+      /* Animation for loader */
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .play-btn {
+        background-color: #4a90e2;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        transition: background-color 0.3s;
+      }
+
+      .play-btn:hover {
+        background-color: #3a7bc8;
+      }
+
+      .play-btn.playing {
+        background-color: #e74c3c;
+      }
+
+      .play-btn.playing i {
+        content: "\f04c"; /* FontAwesome pause icon */
+      }
+
+      .loader {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid var(--secondary-color);
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1.5s linear infinite;
+        margin: 20px auto;
+        display: none;
+      }
+    </style>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
+  <body>
+    <header>
+      <div class="container">
+        <h1>Tamil Speech Recognition & Transliteration</h1>
+        <p>
+          Upload Tamil audio files, transcribe them, and transliterate to
+          English (Tanglish)
+        </p>
+      </div>
+    </header>
+
+    <div class="container">
+      <div class="main-content">
+        <div class="card">
+          <h2>Upload Audio</h2>
+
+          <div id="uploadArea" class="upload-area">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p>Drag & drop your audio file here or click to browse</p>
+            <input
+              type="file"
+              id="fileInput"
+              style="display: none"
+              accept="audio/*"
+            />
+          </div>
+
+          <div id="fileInfo" class="file-info">
+            <p>
+              <strong>Selected file:</strong>
+              <span id="fileName">No file selected</span>
+            </p>
+            <p><strong>File size:</strong> <span id="fileSize">0 KB</span></p>
+          </div>
+
+          <div class="options">
+            <label for="languageSelect">Language:</label>
+            <select id="languageSelect">
+              <option value="ta-IN" selected>Tamil (India)</option>
+            </select>
+          </div>
+
+          <button id="processBtn" class="btn" disabled>Process Audio</button>
+
+          <div id="progressArea" class="progress-area">
+            <div class="progress-bar">
+              <div id="progressBar" class="progress"></div>
+            </div>
+            <div class="progress-status">
+              <span id="progressStatus">Processing...</span>
+              <span id="progressPercentage">0%</span>
+            </div>
+            <div id="loader" class="loader"></div>
+          </div>
+        </div>
+
+        <div id="chunkArea" class="card chunk-area">
+          <h2>Audio Chunks</h2>
+          <p>Select chunks to transcribe:</p>
+
+          <table id="chunkTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Chunk Name</th>
+                <th>Play</th>
+                <th>Select</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Chunks will be dynamically populated here -->
+            </tbody>
+          </table>
+
+          <button id="transcribeButton" class="btn" style="margin-top: 20px">
+            Transcribe Selected Chunks
+          </button>
+        </div>
+
+        <div id="resultArea" class="card result-area">
+          <h2>Transcription Results</h2>
+
+          <div class="result-box" id="transcriptionOutput">
+            <!-- Transcription results will appear here -->
+          </div>
+
+          <button id="downloadBtn" class="btn">
+            <i class="fas fa-download"></i> Download Transcription
+          </button>
+        </div>
+
+        <div class="card">
+          <h2>Process Log</h2>
+          <div id="logArea" class="log-area">
+            <!-- Log entries will appear here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <div class="container">
+        <p>Tamil Speech Recognition & Transliteration Tool &copy; 2025</p>
+      </div>
+    </footer>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // Existing Elements (unchanged)
+        const uploadArea = document.getElementById("uploadArea");
+        const fileInput = document.getElementById("fileInput");
+        const fileInfo = document.getElementById("fileInfo");
+        const fileName = document.getElementById("fileName");
+        const fileSize = document.getElementById("fileSize");
+        const processBtn = document.getElementById("processBtn");
+        const progressArea = document.getElementById("progressArea");
+        const progressBar = document.getElementById("progressBar");
+        const progressStatus = document.getElementById("progressStatus");
+        const progressPercentage =
+          document.getElementById("progressPercentage");
+        const logArea = document.getElementById("logArea");
+        const loader = document.getElementById("loader");
+        const languageSelect = document.getElementById("languageSelect");
+        const chunkArea = document.getElementById("chunkArea");
+        const chunkTable = document
+          .getElementById("chunkTable")
+          .querySelector("tbody");
+        const transcribeButton = document.getElementById("transcribeButton");
+        const resultArea = document.getElementById("resultArea");
+        const transcriptionOutput = document.getElementById(
+          "transcriptionOutput"
+        );
+        const downloadBtn = document.getElementById("downloadBtn");
+        const audioPlayer = new Audio();
+        let currentPlayButton = null;
+
+        // New: Clear chunks on page load
+        async function clearChunksOnLoad() {
+          try {
+            const response = await fetch("/clear_chunks", { method: "GET" });
+            const result = await response.json();
+            if (response.ok) {
+              logMessage(
+                "Previous chunk folder cleared on page load",
+                "success"
+              );
+              console.log("Chunks cleared successfully:", result.message);
+            } else {
+              logMessage(`Error clearing chunks: ${result.error}`, "error");
+            }
+          } catch (error) {
+            logMessage(`Error clearing chunks: ${error.message}`, "error");
+            console.error("Error clearing chunks:", error);
+          }
+        }
+
+        // Call cleanup immediately on page load
+        clearChunksOnLoad();
+
+        // Event Listeners (unchanged except for new reload logic)
+        uploadArea.addEventListener("click", () => fileInput.click());
+        uploadArea.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          uploadArea.classList.add("active");
+        });
+        uploadArea.addEventListener("dragleave", () =>
+          uploadArea.classList.remove("active")
+        );
+        uploadArea.addEventListener("drop", (e) => {
+          e.preventDefault();
+          uploadArea.classList.remove("active");
+          if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            updateFileInfo(fileInput);
+          }
+        });
+
+        fileInput.addEventListener("change", function () {
+          updateFileInfo(this);
+        });
+
+        processBtn.addEventListener("click", processAudio);
+        transcribeButton.addEventListener("click", transcribeSelectedChunks);
+        downloadBtn.addEventListener("click", downloadTranscription);
+
+        // Rest of your existing functions (unchanged)
+        function updateFileInfo(input) {
+          const file = input.files[0];
+          if (file) {
+            if (!file.type.startsWith("audio/")) {
+              logMessage("Error: Please select an audio file.", "error");
+              return;
+            }
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileInfo.style.display = "block";
+            processBtn.disabled = false;
+            logMessage(
+              `File selected: ${file.name} (${formatFileSize(file.size)})`,
+              "success"
+            );
+          }
+        }
+
+        function formatFileSize(bytes) {
+          if (bytes === 0) return "0 Bytes";
+          const k = 1024;
+          const sizes = ["Bytes", "KB", "MB", "GB"];
+          const i = Math.floor(Math.log(bytes) / Math.log(k));
+          return (
+            parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
+          );
+        }
+
+        async function processAudio() {
+          const file = fileInput.files[0];
+          if (!file) {
+            logMessage("Please select a file to upload.", "error");
+            return;
+          }
+          resultArea.style.display = "none";
+          chunkArea.style.display = "none";
+          progressArea.style.display = "block";
+          loader.style.display = "block";
+          processBtn.disabled = true;
+
+          logMessage(`Starting processing: ${file.name}`, "info");
+          logMessage(
+            `Selected language: ${
+              languageSelect.options[languageSelect.selectedIndex].text
+            }`,
+            "info"
+          );
+
+          updateProgress(0, "Uploading audio file...");
+          try {
+            const formData = new FormData();
+            formData.append("file", file);
+            await simulateProgress(
+              0,
+              50,
+              2000,
+              "Uploading and processing audio..."
+            );
+
+            const response = await fetch("/upload", {
+              method: "POST",
+              body: formData,
+            });
+            const result = await response.json();
+
+            if (response.ok) {
+              logMessage("File uploaded and processed successfully", "success");
+              await simulateProgress(50, 100, 1000, "Finalizing...");
+              loadChunks();
+            } else {
+              logMessage(`Error: ${result.error}`, "error");
+              progressArea.style.display = "none";
+              loader.style.display = "none";
+              processBtn.disabled = false;
+            }
+          } catch (error) {
+            logMessage(`Error: ${error.message}`, "error");
+            progressArea.style.display = "none";
+            loader.style.display = "none";
+            processBtn.disabled = false;
+          }
+        }
+
+        async function loadChunks() {
+          try {
+            updateProgress(100, "Loading audio chunks...");
+            const response = await fetch("/chunks");
+            if (!response.ok)
+              throw new Error(`HTTP error! Status: ${response.status}`);
+            const data = await response.json();
+
+            chunkTable.innerHTML = "";
+            data.chunks.forEach((chunk) => {
+              const row = document.createElement("tr");
+              row.innerHTML = `
+                      <td>${chunk.number}</td>
+                      <td>${chunk.filename}</td>
+                      <td class="play-button-cell">
+                        <button class="play-btn" data-audio="${chunk.filename}">
+                          <i class="fas fa-play"></i>
+                        </button>
+                      </td>
+                      <td>
+                        <label class="checkbox-container">
+                          <input type="checkbox" name="chunks" value="${chunk.filename}">
+                          <span class="checkmark"></span>
+                        </label>
+                      </td>
+                    `;
+              chunkTable.appendChild(row);
+            });
+
+            // Add event listeners to new play buttons
+            document.querySelectorAll(".play-btn").forEach((button) => {
+              button.addEventListener("click", function () {
+                const audioFile = this.getAttribute("data-audio");
+                const audioPath = `/download/${audioFile}`; // Ensure this matches your server's audio endpoint
+
+                if (currentPlayButton === this && !audioPlayer.paused) {
+                  // Pause if the same button is clicked while playing
+                  audioPlayer.pause();
+                  this.classList.remove("playing");
+                  this.querySelector("i").classList.remove("fa-pause");
+                  this.querySelector("i").classList.add("fa-play");
+                  currentPlayButton = null;
+                } else {
+                  // Stop any currently playing audio
+                  if (currentPlayButton) {
+                    currentPlayButton.classList.remove("playing");
+                    currentPlayButton
+                      .querySelector("i")
+                      .classList.remove("fa-pause");
+                    currentPlayButton
+                      .querySelector("i")
+                      .classList.add("fa-play");
+                  }
+
+                  // Play the new audio
+                  audioPlayer.src = audioPath;
+                  audioPlayer.play();
+                  this.classList.add("playing");
+                  this.querySelector("i").classList.remove("fa-play");
+                  this.querySelector("i").classList.add("fa-pause");
+                  currentPlayButton = this;
+
+                  // Reset button when audio ends
+                  audioPlayer.onended = function () {
+                    currentPlayButton.classList.remove("playing");
+                    currentPlayButton
+                      .querySelector("i")
+                      .classList.remove("fa-pause");
+                    currentPlayButton
+                      .querySelector("i")
+                      .classList.add("fa-play");
+                    currentPlayButton = null;
+                  };
+                }
+              });
+            });
+
+            // [Your existing code to hide loaders or update UI remains unchanged]
+
+            progressArea.style.display = "none";
+            loader.style.display = "none";
+            chunkArea.style.display = "block";
+            processBtn.disabled = false;
+
+            logMessage(
+              `${data.chunks.length} audio chunks loaded successfully`,
+              "success"
+            );
+            logMessage("Select chunks to transcribe", "info");
+          } catch (error) {
+            logMessage(`Error loading chunks: ${error.message}`, "error");
+            progressArea.style.display = "none";
+            loader.style.display = "none";
+            processBtn.disabled = false;
+          }
+        }
+
+        // Audio player setup (moved
+
+        async function transcribeSelectedChunks() {
+          const selectedChunks = Array.from(
+            document.querySelectorAll('input[name="chunks"]:checked')
+          ).map((cb) => cb.value);
+          if (selectedChunks.length === 0) {
+            logMessage(
+              "Please select at least one chunk to transcribe.",
+              "error"
+            );
+            return;
+          }
+          progressArea.style.display = "block";
+          loader.style.display = "block";
+          transcribeButton.disabled = true;
+
+          logMessage(
+            `Transcribing ${selectedChunks.length} selected chunks`,
+            "info"
+          );
+          try {
+            await simulateProgress(0, 100, 3000, "Transcribing audio...");
+            const response = await fetch("/transcribe", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ selected_chunks: selectedChunks }),
+            });
+            const result = await response.json();
+
+            transcriptionOutput.innerHTML = "";
+            Object.entries(result.transcriptions).forEach(([chunk, text]) => {
+              const chunkResult = document.createElement("div");
+              chunkResult.innerHTML = `<strong>${chunk}:</strong> ${
+                text || "No transcription available"
+              }<br><br>`;
+              transcriptionOutput.appendChild(chunkResult);
+            });
+
+            progressArea.style.display = "none";
+            loader.style.display = "none";
+            resultArea.style.display = "block";
+            transcribeButton.disabled = false;
+            logMessage("Transcription completed successfully", "success");
+          } catch (error) {
+            logMessage(`Error transcribing chunks: ${error.message}`, "error");
+            progressArea.style.display = "none";
+            loader.style.display = "none";
+            transcribeButton.disabled = false;
+          }
+        }
+
+        function downloadTranscription() {
+          const transcriptionText = transcriptionOutput.innerText;
+          const blob = new Blob([transcriptionText], { type: "text/plain" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "transcription.txt";
+          a.click();
+          URL.revokeObjectURL(url);
+          logMessage("Transcription downloaded successfully", "success");
+        }
+
+        function updateProgress(percentage, status) {
+          progressBar.style.width = `${percentage}%`;
+          progressPercentage.textContent = `${Math.round(percentage)}%`;
+          progressStatus.textContent = status;
+        }
+
+        async function simulateProgress(start, end, duration, message) {
+          const interval = 50;
+          const steps = Math.ceil(duration / interval);
+          const increment = (end - start) / steps;
+          let current = start;
+
+          return new Promise((resolve) => {
+            const progressInterval = setInterval(() => {
+              current += increment;
+              if (current >= end) {
+                current = end;
+                clearInterval(progressInterval);
+                updateProgress(current, message);
+                resolve();
+              } else {
+                updateProgress(current, message);
+              }
+            }, interval);
+          });
+        }
+
+        function logMessage(message, type = "info") {
+          const now = new Date();
+          const timeString = now.toLocaleTimeString();
+          const logEntry = document.createElement("div");
+          logEntry.className = `log-entry ${type}`;
+          const logTime = document.createElement("span");
+          logTime.className = "log-time";
+          logTime.textContent = `[${timeString}] `;
+          const logContent = document.createElement("span");
+          logContent.textContent = message;
+          logEntry.appendChild(logTime);
+          logEntry.appendChild(logContent);
+          logArea.appendChild(logEntry);
+          logArea.scrollTop = logArea.scrollHeight;
+        }
+
+        // Initialize with a welcome message
+        logMessage(
+          "Application initialized. Ready to process audio files.",
+          "info"
+        );
+        logMessage("Please select an audio file to begin.", "info");
+      });
+    </script>
+  </body>
+</html>
